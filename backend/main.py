@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from auth import create_access_token, hash_password, verify_password, verify_token
-from database import MessageInDB, UserInDB, get_all_users, get_messages_for_user, get_user, save_message, save_user
+from database import MessageInDB, UserInDB, get_all_users, get_messages_for_user, get_user, save_message, save_user, update_user_profile
 
 app = FastAPI(title="RabtaApp API")
 
@@ -52,13 +52,15 @@ def register(data: RegisterRequest):
         name=data.name.strip(),
         username=username,
         email=data.email.strip(),
+        bio="Hey there! I am using RaabtaApp.",
+        avatar="",
         password_hash=hash_password(data.password),
         created_at=datetime.datetime.utcnow().isoformat()
     )
     save_user(new_user)
     
     token = create_access_token(username=username)
-    return AuthResponse(token=token, user={"name": new_user.name, "username": username, "email": new_user.email, "created_at": new_user.created_at})
+    return AuthResponse(token=token, user={"name": new_user.name, "username": username, "email": new_user.email, "bio": new_user.bio, "avatar": new_user.avatar, "created_at": new_user.created_at})
 
 @app.post("/login", response_model=AuthResponse)
 def login(data: AuthRequest):
@@ -68,12 +70,29 @@ def login(data: AuthRequest):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     
     token = create_access_token(username=username)
-    return AuthResponse(token=token, user={"name": user.name, "username": username, "email": user.email, "created_at": user.created_at})
+    return AuthResponse(token=token, user={"name": user.name, "username": username, "email": user.email, "bio": user.bio, "avatar": user.avatar, "created_at": user.created_at})
 
 @app.get("/users")
 def list_users():
     """Return list of all registered users for easy contact selection."""
-    return [{"name": u.name, "username": u.username, "email": u.email, "created_at": u.created_at} for u in get_all_users()]
+    return [{"name": u.name, "username": u.username, "email": u.email, "bio": u.bio, "avatar": u.avatar, "created_at": u.created_at} for u in get_all_users()]
+
+class ProfileUpdateRequest(BaseModel):
+    token: str
+    name: Optional[str] = None
+    bio: Optional[str] = None
+    avatar: Optional[str] = None
+
+@app.put("/profile")
+def update_profile(data: ProfileUpdateRequest):
+    payload = verify_token(data.token)
+    username = payload.get("username")
+    if not username:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    updated = update_user_profile(username, data.name, data.bio, data.avatar)
+    if not updated:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"name": updated.name, "username": updated.username, "email": updated.email, "bio": updated.bio, "avatar": updated.avatar, "created_at": updated.created_at}
 
 @app.get("/messages/{contact}")
 def get_chat_history(contact: str, token: str):

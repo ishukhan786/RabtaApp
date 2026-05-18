@@ -79,16 +79,17 @@ export default function ChatBox() {
                   }}
                 >
                   <div style={styles.avatar}>
-                    {contact.username.charAt(0).toUpperCase()}
+                    {contact.avatar || contact.username.charAt(0).toUpperCase()}
                     {isOnline && <span style={styles.onlineBadge} />}
                   </div>
                   <div style={styles.contactInfo}>
-                    <div style={styles.contactName}>{contact.username}</div>
+                    <div style={styles.contactName}>{contact.name || contact.username}</div>
+                    <div style={styles.contactBio}>{contact.bio || "Hey there! I am using RaabtaApp."}</div>
                     <div style={styles.contactStatus}>
                       {isOnline ? (
-                        <span style={{ color: "#25d366", fontWeight: "500" }}>Online</span>
+                        <span style={{ color: "#25d366", fontWeight: "500", fontSize: "12px" }}>● Online</span>
                       ) : (
-                        <span style={{ color: "#999999" }}>Offline</span>
+                        <span style={{ color: "#999999", fontSize: "12px" }}>○ Offline</span>
                       )}
                     </div>
                   </div>
@@ -102,25 +103,32 @@ export default function ChatBox() {
       {/* RIGHT AREA: Active Chat Box */}
       <div style={styles.chatArea}>
         {selectedContact ? (
-          <>
-            {/* Chat Header */}
-            <div style={styles.chatHeader}>
-              <div style={styles.chatHeaderInfo}>
-                <div style={styles.chatHeaderAvatar}>
-                  {selectedContact.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <h3 style={styles.chatHeaderName}>{selectedContact}</h3>
-                  <div style={styles.chatHeaderStatus}>
-                    {onlineUsers.includes(selectedContact) ? (
-                      <span style={{ color: "#25d366", fontWeight: "600" }}>🟢 Online</span>
-                    ) : (
-                      <span style={{ color: "#999999" }}>⚪ Offline</span>
-                    )}
+          (() => {
+            const selectedObj = contacts.find((c) => c.username === selectedContact);
+            const dispAvatar = selectedObj?.avatar || selectedContact.charAt(0).toUpperCase();
+            const dispName = selectedObj?.name || selectedContact;
+            const dispBio = selectedObj?.bio || "Hey there! I am using RaabtaApp.";
+            return (
+              <>
+                {/* Chat Header */}
+                <div style={styles.chatHeader}>
+                  <div style={styles.chatHeaderInfo}>
+                    <div style={styles.chatHeaderAvatar}>
+                      {dispAvatar}
+                    </div>
+                    <div>
+                      <h3 style={styles.chatHeaderName}>{dispName}</h3>
+                      <div style={{ fontSize: "12px", color: "#666", marginTop: "2px", fontStyle: "italic" }}>{dispBio}</div>
+                      <div style={styles.chatHeaderStatus}>
+                        {onlineUsers.includes(selectedContact) ? (
+                          <span style={{ color: "#25d366", fontWeight: "600" }}>🟢 Online</span>
+                        ) : (
+                          <span style={{ color: "#999999" }}>⚪ Offline</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
             {/* Messages Display */}
             <div style={styles.messagesContainer}>
@@ -185,6 +193,8 @@ export default function ChatBox() {
               </button>
             </form>
           </>
+            );
+          })()
         ) : (
           <div style={styles.noChatSelected}>
             <h3>👋 Welcome to RabtaApp</h3>
@@ -279,7 +289,16 @@ const styles = {
     fontSize: "16px",
     fontWeight: "600",
     color: "#111b21",
+    marginBottom: "2px",
+  },
+  contactBio: {
+    fontSize: "13px",
+    color: "#666666",
     marginBottom: "4px",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    maxWidth: "180px",
   },
   contactStatus: {
     fontSize: "13px",

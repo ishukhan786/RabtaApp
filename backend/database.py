@@ -23,6 +23,8 @@ class UserInDB(BaseModel):
     name: Optional[str] = None
     username: str
     email: Optional[str] = None
+    bio: Optional[str] = "Hey there! I am using RaabtaApp."
+    avatar: Optional[str] = ""
     password_hash: str
     created_at: str
 
@@ -44,9 +46,9 @@ def init_db():
         if not db.query(models.User).first():
             from auth import hash_password
             users = [
-                models.User(username="ishtiaq", password_hash=hash_password("password123"), created_at=datetime.datetime.utcnow().isoformat()),
-                models.User(username="ali", password_hash=hash_password("password123"), created_at=datetime.datetime.utcnow().isoformat()),
-                models.User(username="sara", password_hash=hash_password("password123"), created_at=datetime.datetime.utcnow().isoformat())
+                models.User(username="ishtiaq", name="Ishtiaq Khan", bio="Senior Full Stack Engineer 🚀", avatar="👨‍💻", password_hash=hash_password("password123"), created_at=datetime.datetime.utcnow().isoformat()),
+                models.User(username="ali", name="Ali Raza", bio="Exploring AI & WebSockets 🤖", avatar="🚀", password_hash=hash_password("password123"), created_at=datetime.datetime.utcnow().isoformat()),
+                models.User(username="sara", name="Sara Ahmed", bio="UI/UX Designer ✨", avatar="🎨", password_hash=hash_password("password123"), created_at=datetime.datetime.utcnow().isoformat())
             ]
             db.add_all(users)
             db.commit()
@@ -60,7 +62,7 @@ def get_user(username: str) -> Optional[UserInDB]:
     try:
         user = db.query(models.User).filter(models.User.username == username).first()
         if user:
-            return UserInDB(name=user.name, username=user.username, email=user.email, password_hash=user.password_hash, created_at=user.created_at)
+            return UserInDB(name=user.name, username=user.username, email=user.email, bio=user.bio, avatar=user.avatar, password_hash=user.password_hash, created_at=user.created_at)
         return None
     finally:
         db.close()
@@ -72,6 +74,8 @@ def save_user(user_in: UserInDB) -> UserInDB:
             name=user_in.name,
             username=user_in.username,
             email=user_in.email,
+            bio=user_in.bio,
+            avatar=user_in.avatar,
             password_hash=user_in.password_hash,
             created_at=user_in.created_at
         )
@@ -120,8 +124,26 @@ def get_all_users() -> List[UserInDB]:
     try:
         users = db.query(models.User).all()
         return [
-            UserInDB(name=u.name, username=u.username, email=u.email, password_hash=u.password_hash, created_at=u.created_at)
+            UserInDB(name=u.name, username=u.username, email=u.email, bio=u.bio, avatar=u.avatar, password_hash=u.password_hash, created_at=u.created_at)
             for u in users
         ]
+    finally:
+        db.close()
+
+def update_user_profile(username: str, name: Optional[str], bio: Optional[str], avatar: Optional[str]) -> Optional[UserInDB]:
+    db = SessionLocal()
+    try:
+        user = db.query(models.User).filter(models.User.username == username).first()
+        if user:
+            if name is not None:
+                user.name = name
+            if bio is not None:
+                user.bio = bio
+            if avatar is not None:
+                user.avatar = avatar
+            db.commit()
+            db.refresh(user)
+            return UserInDB(name=user.name, username=user.username, email=user.email, bio=user.bio, avatar=user.avatar, password_hash=user.password_hash, created_at=user.created_at)
+        return None
     finally:
         db.close()

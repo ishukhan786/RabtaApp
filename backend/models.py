@@ -8,6 +8,8 @@ class User(Base):
     name = Column(String(120), nullable=True)
     username = Column(String(80), unique=True, index=True, nullable=False)
     email = Column(String(255), nullable=True)
+    bio = Column(String(255), nullable=True, default="Hey there! I am using RaabtaApp.")
+    avatar = Column(String(255), nullable=True, default="")
     password_hash = Column(String(255), nullable=False)
     created_at = Column(String(80), nullable=False)
 
