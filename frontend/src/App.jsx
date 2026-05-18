@@ -43,13 +43,36 @@ export default function App() {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        setMessage("❌ Image size must be less than 2MB");
-        return;
-      }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setEditAvatar(reader.result);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 200;
+          const MAX_HEIGHT = 200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = Math.round((height *= MAX_WIDTH / width));
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = Math.round((width *= MAX_HEIGHT / height));
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+          setEditAvatar(compressedBase64);
+        };
+        img.src = reader.result;
       };
       reader.readAsDataURL(file);
     }
@@ -60,6 +83,9 @@ export default function App() {
     setSaving(true);
     setMessage("");
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
     try {
       const res = await fetch(`${API_URL}/profile`, {
         method: "PUT",
@@ -70,7 +96,9 @@ export default function App() {
           bio: editBio.trim(),
           avatar: editAvatar.trim(),
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Failed to update profile");
       setUser(data);
@@ -81,7 +109,12 @@ export default function App() {
         setShowProfileModal(false);
       }, 1500);
     } catch (err) {
-      setMessage(`❌ ${err.message}`);
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        setMessage("❌ Request timed out. Backend might be restarting.");
+      } else {
+        setMessage(`❌ ${err.message}`);
+      }
     } finally {
       setSaving(false);
     }
