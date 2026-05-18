@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Text
 from database import Base
 
 class User(Base):
@@ -9,7 +9,7 @@ class User(Base):
     username = Column(String(80), unique=True, index=True, nullable=False)
     email = Column(String(255), nullable=True)
     bio = Column(String(255), nullable=True, default="Hey there! I am using RaabtaApp.")
-    avatar = Column(String(255), nullable=True, default="")
+    avatar = Column(Text, nullable=True, default="")
     password_hash = Column(String(255), nullable=False)
     created_at = Column(String(80), nullable=False)
 

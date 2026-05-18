@@ -40,6 +40,21 @@ export default function App() {
     setUser(null);
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setMessage("❌ Image size must be less than 2MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditAvatar(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -84,7 +99,12 @@ export default function App() {
           <h1 style={styles.appName}>💬 RabtaApp</h1>
           {user && (
             <span style={styles.userBadge}>
-              {user.avatar || "👤"} <strong>{user.name || user.username}</strong>
+              {user.avatar?.startsWith("data:image") || user.avatar?.startsWith("http") ? (
+                <img src={user.avatar} style={{ width: "24px", height: "24px", borderRadius: "50%", objectFit: "cover" }} alt="Avatar" />
+              ) : (
+                <span style={{ fontSize: "16px" }}>{user.avatar || "👤"}</span>
+              )}
+              <strong>{user.name || user.username}</strong>
             </span>
           )}
         </div>
@@ -114,7 +134,24 @@ export default function App() {
               )}
               
               <div style={styles.inputGroup}>
-                <label style={styles.label}>Choose Avatar Icon</label>
+                <label style={styles.label}>Profile Picture / Avatar</label>
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "8px" }}>
+                  {editAvatar?.startsWith("data:image") || editAvatar?.startsWith("http") ? (
+                    <img src={editAvatar} style={{ width: "64px", height: "64px", borderRadius: "50%", objectFit: "cover", border: "2px solid #075e54" }} alt="Avatar Preview" />
+                  ) : (
+                    <div style={{ width: "64px", height: "64px", borderRadius: "50%", backgroundColor: "#128c7e", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", fontWeight: "bold" }}>
+                      {editAvatar || user?.username?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label style={{ backgroundColor: "#075e54", color: "#fff", padding: "8px 16px", borderRadius: "20px", fontSize: "13px", fontWeight: "bold", cursor: "pointer", textAlign: "center", display: "inline-block" }}>
+                      📸 Upload Photo
+                      <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
+                    </label>
+                    <span style={{ fontSize: "12px", color: "#666" }}>Max size: 2MB</span>
+                  </div>
+                </div>
+                <label style={{ fontSize: "13px", fontWeight: "600", color: "#666", marginTop: "4px" }}>Or choose an emoji icon:</label>
                 <div style={styles.avatarPicker}>
                   {["👨‍💻", "🚀", "🎨", "🌟", "🔥", "👑", "🍕", "🎸", "💡", "⚽"].map((emoji) => (
                     <button
