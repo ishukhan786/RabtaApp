@@ -20,7 +20,9 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 class UserInDB(BaseModel):
+    name: Optional[str] = None
     username: str
+    email: Optional[str] = None
     password_hash: str
     created_at: str
 
@@ -58,7 +60,7 @@ def get_user(username: str) -> Optional[UserInDB]:
     try:
         user = db.query(models.User).filter(models.User.username == username).first()
         if user:
-            return UserInDB(username=user.username, password_hash=user.password_hash, created_at=user.created_at)
+            return UserInDB(name=user.name, username=user.username, email=user.email, password_hash=user.password_hash, created_at=user.created_at)
         return None
     finally:
         db.close()
@@ -67,7 +69,9 @@ def save_user(user_in: UserInDB) -> UserInDB:
     db = SessionLocal()
     try:
         db_user = models.User(
+            name=user_in.name,
             username=user_in.username,
+            email=user_in.email,
             password_hash=user_in.password_hash,
             created_at=user_in.created_at
         )
@@ -116,7 +120,7 @@ def get_all_users() -> List[UserInDB]:
     try:
         users = db.query(models.User).all()
         return [
-            UserInDB(username=u.username, password_hash=u.password_hash, created_at=u.created_at)
+            UserInDB(name=u.name, username=u.username, email=u.email, password_hash=u.password_hash, created_at=u.created_at)
             for u in users
         ]
     finally:

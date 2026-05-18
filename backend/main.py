@@ -29,12 +29,18 @@ class AuthRequest(BaseModel):
     username: str
     password: str
 
+class RegisterRequest(BaseModel):
+    name: str
+    username: str
+    email: str
+    password: str
+
 class AuthResponse(BaseModel):
     token: str
     user: dict
 
 @app.post("/register", response_model=AuthResponse)
-def register(data: AuthRequest):
+def register(data: RegisterRequest):
     username = data.username.strip().lower()
     if not username or not data.password:
         raise HTTPException(status_code=400, detail="Username and password are required")
@@ -43,14 +49,16 @@ def register(data: AuthRequest):
         raise HTTPException(status_code=400, detail="Username already exists")
     
     new_user = UserInDB(
+        name=data.name.strip(),
         username=username,
+        email=data.email.strip(),
         password_hash=hash_password(data.password),
         created_at=datetime.datetime.utcnow().isoformat()
     )
     save_user(new_user)
     
     token = create_access_token(username=username)
-    return AuthResponse(token=token, user={"username": username, "created_at": new_user.created_at})
+    return AuthResponse(token=token, user={"name": new_user.name, "username": username, "email": new_user.email, "created_at": new_user.created_at})
 
 @app.post("/login", response_model=AuthResponse)
 def login(data: AuthRequest):
@@ -60,12 +68,12 @@ def login(data: AuthRequest):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     
     token = create_access_token(username=username)
-    return AuthResponse(token=token, user={"username": username, "created_at": user.created_at})
+    return AuthResponse(token=token, user={"name": user.name, "username": username, "email": user.email, "created_at": user.created_at})
 
 @app.get("/users")
 def list_users():
     """Return list of all registered users for easy contact selection."""
-    return [{"username": u.username, "created_at": u.created_at} for u in get_all_users()]
+    return [{"name": u.name, "username": u.username, "email": u.email, "created_at": u.created_at} for u in get_all_users()]
 
 @app.get("/messages/{contact}")
 def get_chat_history(contact: str, token: str):

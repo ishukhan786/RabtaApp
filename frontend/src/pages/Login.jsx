@@ -2,7 +2,9 @@ import React, { useState } from "react";
 
 export default function Login({ onLoginSuccess }) {
   const [isRegister, setIsRegister] = useState(false);
+  const [name, setName] = useState("");
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -10,7 +12,7 @@ export default function Login({ onLoginSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!username.trim() || !password.trim()) {
+    if (!username.trim() || !password.trim() || (isRegister && (!name.trim() || !email.trim()))) {
       setError("Please fill in all fields.");
       return;
     }
@@ -18,11 +20,14 @@ export default function Login({ onLoginSuccess }) {
     setLoading(true);
     const endpoint = isRegister ? "/register" : "/login";
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    const bodyData = isRegister 
+      ? { name: name.trim(), username: username.trim(), email: email.trim(), password }
+      : { username: username.trim(), password };
     try {
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), password }),
+        body: JSON.stringify(bodyData),
       });
 
       const data = await response.json();
@@ -54,6 +59,20 @@ export default function Login({ onLoginSuccess }) {
         {error && <div style={styles.errorBanner}>{error}</div>}
 
         <form onSubmit={handleSubmit} style={styles.form}>
+          {isRegister && (
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Full Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Ishtiaq Khan"
+                style={styles.input}
+                required={isRegister}
+              />
+            </div>
+          )}
+
           <div style={styles.inputGroup}>
             <label style={styles.label}>Username</label>
             <input
@@ -65,6 +84,20 @@ export default function Login({ onLoginSuccess }) {
               required
             />
           </div>
+
+          {isRegister && (
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Email Address</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="e.g. ishtiaq@example.com"
+                style={styles.input}
+                required={isRegister}
+              />
+            </div>
+          )}
 
           <div style={styles.inputGroup}>
             <label style={styles.label}>Password</label>
