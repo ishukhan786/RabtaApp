@@ -9,9 +9,15 @@ from sqlalchemy.orm import sessionmaker
 # Support DATABASE_URL environment variable for production (e.g., PostgreSQL), fallback to SQLite
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./rabta_live.db")
 
+def trigger_backup():
+    pass
+
 if DATABASE_URL.startswith("sqlite"):
     try:
-        from backup import download_db, trigger_backup
+        from backup import download_db
+        from backup import trigger_backup as run_backup
+        def trigger_backup():
+            run_backup()
         download_db()
     except Exception as e:
         print(f"Skipping DB restore: {e}")
