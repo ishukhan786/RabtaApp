@@ -10,6 +10,11 @@ from sqlalchemy.orm import sessionmaker
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./rabta_live.db")
 
 if DATABASE_URL.startswith("sqlite"):
+    try:
+        from backup import download_db, trigger_backup
+        download_db()
+    except Exception as e:
+        print(f"Skipping DB restore: {e}")
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
     if DATABASE_URL.startswith("postgres://"):
@@ -82,6 +87,10 @@ def save_user(user_in: UserInDB) -> UserInDB:
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
+        try:
+            trigger_backup()
+        except Exception as e:
+            print(f"Backup trigger failed: {e}")
         return user_in
     finally:
         db.close()
@@ -98,6 +107,10 @@ def save_message(message_in: MessageInDB):
         )
         db.add(db_msg)
         db.commit()
+        try:
+            trigger_backup()
+        except Exception as e:
+            print(f"Backup trigger failed: {e}")
     finally:
         db.close()
 
@@ -143,6 +156,10 @@ def update_user_profile(username: str, name: Optional[str], bio: Optional[str], 
                 user.avatar = avatar
             db.commit()
             db.refresh(user)
+            try:
+                trigger_backup()
+            except Exception as e:
+                print(f"Backup trigger failed: {e}")
             return UserInDB(name=user.name, username=user.username, email=user.email, bio=user.bio, avatar=user.avatar, password_hash=user.password_hash, created_at=user.created_at)
         return None
     finally:
