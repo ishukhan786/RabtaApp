@@ -44,21 +44,8 @@ class MessageInDB(BaseModel):
 import models
 
 def init_db():
-    """Create database tables and seed initial users for easy testing."""
+    """Create database tables."""
     Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
-    try:
-        if not db.query(models.User).first():
-            from auth import hash_password
-            users = [
-                models.User(username="ishtiaq", name="Ishtiaq Khan", bio="Senior Full Stack Engineer 🚀", avatar="👨‍💻", password_hash=hash_password("password123"), created_at=datetime.datetime.utcnow().isoformat()),
-                models.User(username="ali", name="Ali Raza", bio="Exploring AI & WebSockets 🤖", avatar="🚀", password_hash=hash_password("password123"), created_at=datetime.datetime.utcnow().isoformat()),
-                models.User(username="sara", name="Sara Ahmed", bio="UI/UX Designer ✨", avatar="🎨", password_hash=hash_password("password123"), created_at=datetime.datetime.utcnow().isoformat())
-            ]
-            db.add_all(users)
-            db.commit()
-    finally:
-        db.close()
 
 init_db()
 
